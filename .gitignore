@@ -34,6 +34,9 @@ yarn-error.log*
 package-lock.json
 yarn.lock
 
+# Folders to be generated
+screenshots
+
 # Ignore any generated files or directories
 # Customize this based on your project structure
 # example:
