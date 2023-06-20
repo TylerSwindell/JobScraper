@@ -1,5 +1,5 @@
 import fs from "fs";
-import puppeteer from "puppeteer";
+import puppeteer, { TimeoutError } from "puppeteer";
 
 const screenshotsFolderPath = "./screenshots";
 
@@ -25,42 +25,94 @@ type JobPosting = {
   // Set screen size
   await page.setViewport({ width: 1080, height: 2400 });
 
+  let searchTerm = "";
+  switch (process.argv.length) {
+    case 0:
+    case 1:
+    case 2:
+      searchTerm = "front end web developer";
+      break;
+    case 3:
+      searchTerm = process.argv[2];
+      break;
+    default:
+      const args = process.argv.slice(2);
+      searchTerm = args.join(" ");
+      break;
+  }
+
   // Type into search box
-  await page.type("#text-input-what", "front end web developer");
+  await page.type("#text-input-what", searchTerm);
   await page.keyboard.press("Enter");
 
-  // Wait and click on first result
-  const list = await scrapeJobCardContainerElements(page);
-  await list.forEach((i) => console.log(i, "\n"));
-
-  await gotoNextPage(page);
+  do {
+    const jobData = await scrapeJobCardContainerElements(page);
+    console.log(jobData);
+  } while (await gotoNextPage(page));
   await closeBrowser(page, browser);
 })();
 
 async function scrapeJobCardContainerElements(page) {
-  const jobCardContainer = "#mosaic-provider-jobcards > ul";
-  const jobCardContainerSelector = await page.waitForSelector(jobCardContainer);
+  const jobCardContainerSelector = "#mosaic-provider-jobcards ul";
+  await page.waitForSelector(jobCardContainerSelector);
+  const jobData = await page.evaluate(() => {
+    const jobs = Array.from(
+      document.querySelectorAll("div#mosaic-provider-jobcards ul li")
+    ).map((j) => {
+      const title = j.querySelector("h2 a span")?.getAttribute("title");
+      if (!title) return {};
 
-  return await jobCardContainerSelector?.evaluate((el) => {
-    let s = [];
-    const childCount = el.childElementCount;
-    for (let i = 0; i < childCount; i++) {
-      s.push(el.children[i]?.children[0]?.innerText);
-    }
-    return s;
+      const jobLink: HTMLAnchorElement = <HTMLAnchorElement>(
+        j.querySelector("h2 a")
+      );
+
+      let desc = j
+        .querySelector("tr.underShelfFooter")
+        .textContent.slice(3)
+        .split("\n");
+      desc = desc.slice(0, desc.length - 1);
+      return {
+        id:
+          "indeed:" +
+          j.querySelector("button.kebabMenu-button")?.id.split("-")[1],
+        title,
+        salary:
+          j.querySelector("div.salary-snippet-container")?.textContent ||
+          "Unlisted",
+        companyName: j.querySelector("span.companyName")?.textContent,
+        companyLocation: j.querySelector("div.companyLocation")?.textContent,
+        desc,
+        href: jobLink?.href,
+      };
+    });
+
+    return jobs.filter((job) => JSON.stringify(job) !== "{}");
   });
+
+  return jobData;
 }
 
 async function gotoNextPage(page: puppeteer.Page) {
   const nextPageSelector = '[aria-label="Next Page"]';
-  const nextPage = await page.$(nextPageSelector);
+  let res = 0;
+  try {
+    await page.waitForSelector(nextPageSelector, { timeout: 1000 });
+    const nextPage = await page.$(nextPageSelector);
 
-  if (nextPage) {
-    console.log("next found");
-    await nextPage.click().then(() => {
-      console.log("next clicked");
-    });
+    if (nextPage) {
+      console.log("next found");
+      await nextPage.click().then(() => {
+        console.log("next clicked");
+        res = 1;
+      });
+    }
+  } catch (err) {
+    if (err instanceof TimeoutError) {
+      console.error("Next button not detected");
+    }
   }
+
+  return res;
 }
 
 async function closeBrowser(page: puppeteer.Page, browser: puppeteer.Browser) {
@@ -68,7 +120,7 @@ async function closeBrowser(page: puppeteer.Page, browser: puppeteer.Browser) {
     await screenshot(page, "browser_on_close.png");
     await browser.close();
     console.log("Script Complete.");
-  }, 5000);
+  }, 1000);
 }
 
 async function screenshot(page: puppeteer.Page, name: string) {
