@@ -19,10 +19,10 @@ This is a Node.js script that scrapes job postings from Indeed.com based on a sp
 
 ## Usage
 
-To run the script, use the following command:
+To run the script, navigate to the main directory and use the following command:
 
 ```
-node index.js [searchTerm]
+node . [searchTerm]
 ```
 
 - `searchTerm` (optional): The term to search for job postings on Indeed.com. If not provided, the default value is "front end web developer".
