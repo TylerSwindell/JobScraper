@@ -6,7 +6,7 @@ const { searchTerms, cli } = appSettings;
  * Processes command line arguments and separates them into regular arguments and flags.
  * @returns An object with the processed arguments and flags.
  */
-export const processArgs = (): {
+const processArgs = (): {
   args: Array<string>;
   flags: Array<string>;
 } => {
@@ -24,7 +24,7 @@ export const processArgs = (): {
  * @param cmd - The string to check.
  * @returns True if the string represents a valid command, false otherwise.
  */
-export const isCommand = (cmd: string): boolean => {
+const isCommand = (cmd: string): boolean => {
   if (hasIndicator(cmd)) cmd = cmd.slice(2);
   return cli.commands.includes(cmd);
 };
@@ -34,7 +34,7 @@ export const isCommand = (cmd: string): boolean => {
  * @param cmd - The string to check.
  * @returns True if the string has the indicator prefix, false otherwise.
  */
-export const hasIndicator = (cmd: string): boolean =>
+const hasIndicator = (cmd: string): boolean =>
   cmd.substring(0, 2) === cli.indicator && cmd !== cli.indicator;
 
 /**
@@ -59,7 +59,7 @@ export const checkDevMode = (flags: JobScraper.SearchFlags): boolean => {
   return flags.devMode;
 };
 
-export const updateFlags = (flags: Array<string>): JobScraper.SearchFlags => {
+const updateFlags = (flags: Array<string>): JobScraper.SearchFlags => {
   const devMode = flags.includes(cli.indicator + cli.commands[0]);
 
   return {

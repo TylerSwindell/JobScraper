@@ -24,6 +24,7 @@ puppeteer/.local-chromium/
 *.sublime-workspace
 
 # Logs and debugging files
+notes.txt
 logs/
 *.log
 npm-debug.log*
