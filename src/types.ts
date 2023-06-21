@@ -14,11 +14,19 @@ export namespace JobScraper {
     href: string;
   };
 
-  export type SearchFlags = {
+  export type SearchArgs = Array<string>;
+  export type SearchFlags = Array<string>;
+
+  export type Flags = {
     devMode: boolean;
     indeed: boolean;
     monster: boolean;
     linkedin: boolean;
+  };
+
+  export type CLIInput = {
+    args: SearchArgs;
+    flags: SearchFlags;
   };
 
   export enum SEARCH_STATUS {

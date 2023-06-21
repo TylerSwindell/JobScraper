@@ -1,22 +1,19 @@
 import fs from "fs";
 import { appSettings } from "./config.js";
 import { scrapeIndeed } from "./indeed.js";
-import { getSearchDetails } from "./cli.js";
+import { processArgs } from "./cli.js";
+import SearchSession from "./SearchSession.js";
 const { fileSystem } = appSettings;
-
-type Site = {
-  id: number;
-  name: string;
-  url: string;
-};
 
 // Main
 (async () => {
-  const { searchFlags, searchTerm } = getSearchDetails();
+  const mySearchSession = SearchSession.Instance;
+  mySearchSession.updateSession(processArgs());
+  console.log(mySearchSession);
 
   let jobListings = {};
-  if (searchFlags.indeed)
-    jobListings["indeed"] = await scrapeIndeed(searchTerm);
+  if (mySearchSession.isActiveFlag("indeed"))
+    jobListings["indeed"] = await scrapeIndeed(mySearchSession);
 
   if (!fs.existsSync(fileSystem.outputFolder))
     fs.mkdirSync(fileSystem.outputFolder, "0777");

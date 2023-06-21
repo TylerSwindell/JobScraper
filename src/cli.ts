@@ -1,3 +1,4 @@
+import SearchSession from "./SearchSession.js";
 import { appSettings } from "./config.js";
 import { JobScraper } from "./types.js";
 const { searchTerms, cli } = appSettings;
@@ -6,10 +7,7 @@ const { searchTerms, cli } = appSettings;
  * Processes command line arguments and separates them into regular arguments and flags.
  * @returns An object with the processed arguments and flags.
  */
-const processArgs = (): {
-  args: Array<string>;
-  flags: Array<string>;
-} => {
+export const processArgs = (): JobScraper.CLIInput => {
   const argArr = process.argv.slice(2);
   const args = argArr.filter((a) => !hasIndicator(a) && a !== cli.indicator);
   const flags = argArr.filter((a) => hasIndicator(a) && isCommand(a));
@@ -51,27 +49,6 @@ export const command = (cmd: string): JobScraper.CLICommand | Error => {
 };
 
 /**
- * Checks if the "--dev-mode" flag is present in the provided flags array.
- * @param flags - An array of flags.
- * @returns True if the "--dev-mode" flag is present, false otherwise.
- */
-export const checkDevMode = (flags: JobScraper.SearchFlags): boolean => {
-  return flags.devMode;
-};
-
-const updateFlags = (flags: Array<string>): JobScraper.SearchFlags => {
-  const devMode = flags.includes(cli.indicator + cli.commands[0]);
-
-  return {
-    // TODO: REFACTOR THIS
-    devMode,
-    indeed: devMode || flags.includes(cli.indicator + cli.commands[1]),
-    monster: devMode || flags.includes(cli.indicator + cli.commands[2]),
-    linkedin: devMode || flags.includes(cli.indicator + cli.commands[3]),
-  };
-};
-
-/**
  * Logs a message in the development mode.
  * @param msg - The message to log.
  */
@@ -79,20 +56,20 @@ export const devModeLog = (msg: string): void => {
   // Add state manager for app (Redux?)
 };
 
-export const getSearchDetails = () => {
+export const getSearchDetails = (mySearchSession: SearchSession) => {
   const { args, flags } = processArgs();
-  const searchFlags: JobScraper.SearchFlags = updateFlags(flags);
+  mySearchSession.updateFlags(flags);
   let searchTerm = args.length ? args.join(" ") : searchTerms.default;
 
-  if (checkDevMode(searchFlags)) {
+  if (mySearchSession.checkDevMode()) {
     console.log("Search Term:", searchTerm);
     console.log("Args:", args);
     console.log("Flags:", flags);
-    console.log(searchFlags);
+    console.log(flags);
   }
 
   return {
-    searchFlags,
+    flags,
     searchTerm,
   };
 };

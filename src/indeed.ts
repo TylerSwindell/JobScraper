@@ -3,13 +3,14 @@ import puppeteer, { TimeoutError } from "puppeteer";
 import { appSettings } from "./config.js";
 import { closeBrowser, screenshot } from "./utils.js";
 const { sites } = appSettings;
+import SearchSession from "./SearchSession.js";
 
 /** Main Entry Point
  * Scrapes job listings from Indeed using Puppeteer.
  * @param searchTerm - The search term to look for job listings.
  * @returns An array of job listings scraped from Indeed.
  **/
-export const scrapeIndeed = async (searchTerm: string) => {
+export const scrapeIndeed = async (mySearchSession: SearchSession) => {
   const browser: puppeteer.Browser = await puppeteer.launch({
     headless: "new",
   });
@@ -21,13 +22,13 @@ export const scrapeIndeed = async (searchTerm: string) => {
   const httpRes: puppeteer.HTTPResponse = await page.goto(sites.indeed.url);
 
   // Type into search box
-  await page.type("#text-input-what", searchTerm);
+  await page.type("#text-input-what", mySearchSession.getSearchTerm());
   await page.keyboard.press("Enter");
 
   let jobListings = [];
   do {
     jobListings.push(await scrapeJobCardContainerElements(page));
-  } while (await gotoNextPage(page));
+  } while (await gotoNextPage(page, mySearchSession));
 
   let completeJobScrape = [];
   jobListings.forEach((jobList) =>
@@ -51,7 +52,9 @@ export const scrapeIndeed = async (searchTerm: string) => {
  * @returns An object containing one page of scraped job data.
  * TODO
  **/
-export async function scrapeJobCardContainerElements(page: puppeteer.Page) {
+export async function scrapeJobCardContainerElements(
+  page: puppeteer.Page
+): Promise<{}[]> {
   screenshot(page, "ss1.png");
   const jobCardContainerSelector = "#mosaic-provider-jobcards ul";
   const noResultContainerSelector = ".jobsearch-NoResult-messageContainer";
@@ -119,7 +122,10 @@ export async function scrapeJobCardContainerElements(page: puppeteer.Page) {
  * - 0 if the next button was not found or timed out.
  * - 1 if the next button was found and clicked successfully.
  **/
-export async function gotoNextPage(page: puppeteer.Page) {
+export async function gotoNextPage(
+  page: puppeteer.Page,
+  mySearchSession: SearchSession
+): Promise<number> {
   const nextPageSelector = '[aria-label="Next Page"]';
   let res = 0;
   try {
@@ -127,9 +133,9 @@ export async function gotoNextPage(page: puppeteer.Page) {
     const nextPage = await page.$(nextPageSelector);
 
     if (nextPage) {
-      console.log("next found");
+      if (mySearchSession.checkDevMode()) console.log("next found");
       await nextPage.click().then(() => {
-        console.log("next clicked");
+        if (mySearchSession.checkDevMode()) console.log("next clicked");
         res = 1;
       });
     }
