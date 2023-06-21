@@ -2,11 +2,11 @@
   "name": "indeed-scraper",
   "version": "1.0.0",
   "description": "",
-  "main": "dist/index.js",
+  "main": "dist/app.js",
   "type": "module",
   "scripts": {
     "build": "tsc",
-    "dev": "npm run build;node .;"
+    "dev": "npm run build;node . --dev-mode;"
   },
   "keywords": [],
   "author": "",

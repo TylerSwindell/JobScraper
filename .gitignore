@@ -36,6 +36,7 @@ yarn.lock
 
 # Folders to be generated
 screenshots
+output
 
 # Ignore any generated files or directories
 # Customize this based on your project structure
