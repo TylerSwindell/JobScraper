@@ -1,6 +1,6 @@
 import { appSettings } from "./config.js";
 import { JobScraper } from "./types.js";
-const { cli } = appSettings;
+const { searchTerms, cli } = appSettings;
 
 /**
  * Processes command line arguments and separates them into regular arguments and flags.
@@ -77,4 +77,22 @@ export const updateFlags = (flags: Array<string>): JobScraper.SearchFlags => {
  */
 export const devModeLog = (msg: string): void => {
   // Add state manager for app (Redux?)
+};
+
+export const getSearchDetails = () => {
+  const { args, flags } = processArgs();
+  const searchFlags: JobScraper.SearchFlags = updateFlags(flags);
+  let searchTerm = args.length ? args.join(" ") : searchTerms.default;
+
+  if (checkDevMode(searchFlags)) {
+    console.log("Search Term:", searchTerm);
+    console.log("Args:", args);
+    console.log("Flags:", flags);
+    console.log(searchFlags);
+  }
+
+  return {
+    searchFlags,
+    searchTerm,
+  };
 };
