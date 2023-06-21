@@ -30,10 +30,10 @@ node . [flags] [searchTerms]
 
 Commands
 
-- --dev-mode: Enables development mode. When this flag is present, all other flags are ignored, and - the scraping process will be performed in a development mode.
-- --indeed: Enables scraping of job listings from Indeed. This flag can be used in combination with --dev-mode to scrape only from Indeed in the development mode.
-- --monster: (Not implemented) Enables scraping of job listings from Monster. This flag can be used in combination with --dev-mode to scrape only from Monster in the development mode.
-- --linkedin: (Not implemented) Enables scraping of job listings from LinkedIn. This flag can be used in combination with --dev-mode to scrape only from LinkedIn in the development mode.
+- --dev-mode: Enables development mode. When this flag is present, all other flags are ignored, and the scraping process will be performed in a development mode scraping all sources.
+- --indeed: Enables scraping of job listings from Indeed.
+- --monster: (Not implemented) Enables scraping of job listings from Monster.
+- --linkedin: (Not implemented) Enables scraping of job listings from LinkedIn.
 
 The script will launch a headless browser using Puppeteer, navigate to Indeed.com, and perform a search using the specified search term. It will scrape the job card container elements on each page of the search results and display the extracted job data in the console.
 
