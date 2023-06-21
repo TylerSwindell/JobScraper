@@ -21,9 +21,9 @@ type Site = {
 (async () => {
   const { args, flags } = processArgs();
   const searchFlags: JobScraper.SearchFlags = updateFlags(flags);
-  console.log(searchFlags);
 
   if (checkDevMode(searchFlags)) {
+    console.log(searchFlags);
     console.log("Flags:", flags);
     console.log("Args:", args);
   }
@@ -31,7 +31,9 @@ type Site = {
   let searchTerm = args.length ? args.join(" ") : searchTerms.default;
   console.log("Search Term:", searchTerm);
 
-  const jobListings = await scrapeIndeed(searchTerm);
+  let jobListings = {};
+  if (searchFlags.indeed)
+    jobListings["indeed"] = await scrapeIndeed(searchTerm);
 
   if (!fs.existsSync(fileSystem.outputFolder))
     fs.mkdirSync(fileSystem.outputFolder, "0777");

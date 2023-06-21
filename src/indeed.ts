@@ -29,9 +29,18 @@ export const scrapeIndeed = async (searchTerm: string) => {
     jobListings.push(await scrapeJobCardContainerElements(page));
   } while (await gotoNextPage(page));
 
+  let completeJobScrape = [];
+  jobListings.forEach((jobList) =>
+    jobList.forEach((jobObj) => completeJobScrape.push(jobObj))
+  );
+
   await closeBrowser(page, browser);
 
-  return jobListings;
+  return {
+    jobCount: completeJobScrape.length,
+    date: Date.now(),
+    jobList: completeJobScrape,
+  };
 };
 
 /* Helper Functions */
@@ -47,57 +56,60 @@ export async function scrapeJobCardContainerElements(page: puppeteer.Page) {
   const jobCardContainerSelector = "#mosaic-provider-jobcards ul";
   const noResultContainerSelector = ".jobsearch-NoResult-messageContainer";
 
-  const searchStatus = 1;
+  let searchStatus: JobScraper.SEARCH_STATUS = 2;
   try {
     await page.waitForSelector(jobCardContainerSelector, { timeout: 2000 });
   } catch (err) {
-    console.log(err);
+    if (err instanceof TimeoutError) {
+      console.error(err.name, "No job list was found on page");
+      searchStatus = 1;
+    }
     try {
       await page.waitForSelector(noResultContainerSelector, { timeout: 10 });
+      console.log("No search results for ");
+      searchStatus = 0;
     } catch (err) {
-      console.log(err);
+      console.log();
+      searchStatus = 1;
     }
   }
 
-  let jobData = {};
-  if (searchStatus) {
-    jobData = await page.evaluate(() => {
-      const jobs = Array.from(
-        document.querySelectorAll("div#mosaic-provider-jobcards ul li")
-      ).map((j) => {
-        const title = j.querySelector("h2 a span")?.getAttribute("title");
-        if (!title) return {};
+  let filteredJobData = await page.evaluate(() => {
+    const scrapeJobInfo = (j: Element) => {
+      const title = j.querySelector("h2 a span")?.getAttribute("title");
+      if (!title) return {};
 
-        const jobLink: HTMLAnchorElement = <HTMLAnchorElement>(
-          j.querySelector("h2 a")
-        );
+      const jobLink: HTMLAnchorElement = <HTMLAnchorElement>(
+        j.querySelector("h2 a")
+      );
 
-        let desc = j
-          .querySelector("tr.underShelfFooter")
-          .textContent.slice(3)
-          .split("\n");
-        desc = desc.slice(0, desc.length - 1);
-        return <JobScraper.JobData>{
-          id:
-            "indeed:" +
-            j.querySelector("button.kebabMenu-button")?.id.split("-")[1],
-          title,
-          salary:
-            j.querySelector("div.salary-snippet-container")?.textContent ||
-            "Unlisted",
-          companyName: j.querySelector("span.companyName")?.textContent,
-          companyLocation: j.querySelector("div.companyLocation")?.textContent,
-          desc,
-          href: jobLink?.href,
-        };
-      });
+      let desc = j
+        .querySelector("tr.underShelfFooter")
+        .textContent.slice(3)
+        .split("\n");
+      desc = desc.slice(0, desc.length - 1);
+      return <JobScraper.JobData>{
+        id:
+          "indeed:" +
+          j.querySelector("button.kebabMenu-button")?.id.split("-")[1],
+        title,
+        salary:
+          j.querySelector("div.salary-snippet-container")?.textContent ||
+          "Unlisted",
+        companyName: j.querySelector("span.companyName")?.textContent,
+        companyLocation: j.querySelector("div.companyLocation")?.textContent,
+        desc,
+        href: jobLink?.href,
+      };
+    };
 
-      return jobs.filter((job) => JSON.stringify(job) !== "{}");
-    });
-    jobData = Object.assign({}, jobData);
-  }
+    const jobs = Array.from(
+      document.querySelectorAll("div#mosaic-provider-jobcards ul li")
+    ).map((j) => scrapeJobInfo(j));
 
-  return jobData;
+    return jobs.filter((job) => JSON.stringify(job) !== "{}");
+  });
+  return filteredJobData;
 }
 
 /**

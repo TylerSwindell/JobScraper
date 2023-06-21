@@ -18,5 +18,13 @@ export namespace JobScraper {
     devMode: boolean;
     indeed: boolean;
     monster: boolean;
+    linkedin: boolean;
   };
+
+  export enum SEARCH_STATUS {
+    "No Result",
+    "Search Error",
+    "Started",
+    "Complete",
+  }
 }

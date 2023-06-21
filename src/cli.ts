@@ -60,11 +60,14 @@ export const checkDevMode = (flags: JobScraper.SearchFlags): boolean => {
 };
 
 export const updateFlags = (flags: Array<string>): JobScraper.SearchFlags => {
+  const devMode = flags.includes(cli.indicator + cli.commands[0]);
+
   return {
     // TODO: REFACTOR THIS
-    devMode: flags.includes(cli.indicator + cli.commands[0]),
-    indeed: flags.includes(cli.indicator + cli.commands[1]),
-    monster: flags.includes(cli.indicator + cli.commands[2]),
+    devMode,
+    indeed: devMode || flags.includes(cli.indicator + cli.commands[1]),
+    monster: devMode || flags.includes(cli.indicator + cli.commands[2]),
+    linkedin: devMode || flags.includes(cli.indicator + cli.commands[3]),
   };
 };
 

@@ -2,7 +2,7 @@ export const appSettings = {
   cli: {
     indicator: "--",
     // TODO: REFACTOR THIS
-    commands: ["dev-mode", "indeed", "monster"],
+    commands: ["dev-mode", "indeed", "monster", "linkedin"],
   },
   searchTerms: {
     default: "front end web developer",
