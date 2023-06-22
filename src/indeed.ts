@@ -39,7 +39,7 @@ export const scrapeIndeed = async (mySearchSession: SearchSession) => {
 
   return {
     jobCount: completeJobScrape.length,
-    date: Date.now(),
+    date: new Date(),
     jobList: completeJobScrape,
   };
 };
@@ -77,42 +77,52 @@ export async function scrapeJobCardContainerElements(
     }
   }
 
-  let filteredJobData = await page.evaluate(() => {
-    const scrapeJobInfo = (j: Element) => {
-      const title = j.querySelector("h2 a span")?.getAttribute("title");
-      if (!title) return {};
-
-      const jobLink: HTMLAnchorElement = <HTMLAnchorElement>(
-        j.querySelector("h2 a")
-      );
-
-      let desc = j
-        .querySelector("tr.underShelfFooter")
-        .textContent.slice(3)
-        .split("\n");
-      desc = desc.slice(0, desc.length - 1);
-      return <JobScraper.JobData>{
-        id:
-          "indeed:" +
-          j.querySelector("button.kebabMenu-button")?.id.split("-")[1],
-        title,
-        salary:
-          j.querySelector("div.salary-snippet-container")?.textContent ||
-          "Unlisted",
-        companyName: j.querySelector("span.companyName")?.textContent,
-        companyLocation: j.querySelector("div.companyLocation")?.textContent,
-        desc,
-        href: jobLink?.href,
-      };
-    };
-
-    const jobs = Array.from(
-      document.querySelectorAll("div#mosaic-provider-jobcards ul li")
-    ).map((j) => scrapeJobInfo(j));
-
-    return jobs.filter((job) => JSON.stringify(job) !== "{}");
-  });
+  let filteredJobData: Array<JobScraper.JobData> = await page.evaluate(
+    indeedJobEval
+  );
   return filteredJobData;
+}
+
+function indeedJobEval(): Array<JobScraper.JobData> {
+  const scrapeJobInfo = (j: Element): JobScraper.JobData | {} => {
+    const title = j.querySelector("h2 a span")?.getAttribute("title");
+    if (!title) return {};
+
+    const jobLink: HTMLAnchorElement = <HTMLAnchorElement>(
+      j.querySelector("h2 a")
+    );
+
+    let desc = j
+      .querySelector("tr.underShelfFooter")
+      .textContent.slice(3)
+      .split("\n");
+    desc = desc.slice(0, desc.length - 1);
+    return <JobScraper.JobData>{
+      id:
+        "indeed:" +
+        j.querySelector("button.kebabMenu-button")?.id.split("-")[1],
+      title,
+      salary:
+        j.querySelector("div.salary-snippet-container")?.textContent ||
+        "Unlisted",
+      companyName: j.querySelector("span.companyName")?.textContent,
+      companyLocation: j.querySelector("div.companyLocation")?.textContent,
+      desc,
+      href: jobLink?.href,
+    };
+  };
+
+  const jobs: Array<JobScraper.JobData | {}> = Array.from(
+    document.querySelectorAll("div#mosaic-provider-jobcards ul li")
+  )
+    // Iterate through each <li> and map the appropriate data to a JobData object.
+    .map((j) => scrapeJobInfo(j))
+    // Remove empty objects
+    .filter(
+      (job: JobScraper.JobData | {}): boolean => JSON.stringify(job) !== "{}"
+    );
+
+  return <Array<JobScraper.JobData>>jobs;
 }
 
 /**
